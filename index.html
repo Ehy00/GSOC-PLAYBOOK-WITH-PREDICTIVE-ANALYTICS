@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THD GSOC Playbook - Predictive Supply Chain Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .gradient-orange {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+        .gradient-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Simplified Icon Components
+        const AlertTriangle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        );
+
+        const Brain = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+        );
+
+        const Package = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+        );
+
+        const Users = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+        );
+
+        const MessageSquare = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+            </svg>
+        );
+
+        const ClipboardCheck = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+        );
+
+        const ChevronDown = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        );
+
+        const ChevronUp = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+            </svg>
+        );
+
+        const Truck = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+            </svg>
+        );
+
+        const Cloud = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+            </svg>
+        );
+
+        const TrendingUp = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+        );
+
+        const EnhancedSupplyChainPlaybook = () => {
+            const [expandedSections, setExpandedSections] = useState({
+                predictive: true,
+                protocol: false,
+                flowchart: false,
+                roles: false,
+                communications: false,
+                continuity: false
+            });
+
+            const toggleSection = (section) => {
+                setExpandedSections(prev => ({
+                    ...prev,
+                    [section]: !prev[section]
+                }));
+            };
+
+            const SectionHeader = ({ icon: Icon, title, section, color }) => (
+                <div 
+                    className={`flex items-center justify-between p-4 ${color} cursor-pointer rounded-lg mb-2 hover:opacity-90 transition-opacity`}
+                    onClick={() => toggleSection(section)}
+                >
+                    <div className="flex items-center gap-3">
+                        <Icon className="w-6 h-6 text-white" />
+                        <h2 className="text-xl font-bold text-white">{title}</h2>
+                    </div>
+                    {expandedSections[section] ? 
+                        <ChevronUp className="w-5 h-5 text-white" /> : 
+                        <ChevronDown className="w-5 h-5 text-white" />
+                    }
+                </div>
+            );
+
+            return (
+                <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+                    {/* Header Section */}
+                    <div className="gradient-orange text-white p-10 rounded-xl mb-8 shadow-2xl">
+                        <div className="text-center mb-8">
+                            <div className="inline-block bg-white/20 backdrop-blur-sm rounded-full p-6 mb-6">
+                                <Truck className="w-16 h-16" />
+                            </div>
+                            <h1 className="text-5xl font-bold mb-4 tracking-tight">THD GSOC PLAYBOOK</h1>
+                            <div className="h-1 w-32 bg-white mx-auto mb-6"></div>
+                            <p className="text-2xl text-orange-100 font-light">Predictive Supply Chain Management</p>
+                            <p className="text-xl text-orange-50 mt-2">AI-Powered Disruption Response</p>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 mt-8 border border-white/20">
+                            <h2 className="text-xl font-bold mb-4 text-center">DOCUMENT INFORMATION</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-orange-100 mb-1">Created By</p>
+                                    <p className="text-lg font-bold">Ayomide Braimoh</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-orange-100 mb-1">Institution</p>
+                                    <p className="text-lg font-bold">Alabama A&M University</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-orange-100 mb-1">Academic Program</p>
+                                    <p className="text-lg font-bold">Computer Science Major</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-orange-100 mb-1">Version</p>
+                                    <p className="text-lg font-bold">2.0 | November 2025</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-orange-800/50 rounded-lg p-6 border-l-4 border-white">
+                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                <Brain className="w-5 h-5" />
+                                Enhanced with Predictive Intelligence
+                            </h3>
+                            <p className="text-orange-50 leading-relaxed">
+                                This enhanced playbook combines proven field procedures with AI-powered predictive analytics. 
+                                Using real-time data and weather forecasting, our system helps you act BEFORE disruptions occur—not just react to them. 
+                                Based on proven systems like UPS's HEAT platform, this approach reduces response time by up to 40% and 
+                                saves millions in operational costs while keeping customers informed and satisfied.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Predictive Analytics Overview */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={Brain} 
+                            title="Predictive Analytics System - How It Works" 
+                            section="predictive"
+                            color="bg-gradient-to-r from-purple-600 to-indigo-600"
+                        />
+                        {expandedSections.predictive && (
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-purple-600">What Is Predictive Analytics?</h3>
+                                    <p className="text-gray-700 mb-4">
+                                        Instead of waiting for problems to happen, our AI system watches weather patterns, traffic data, 
+                                        and supply chain signals 24/7. When it spots potential trouble, it alerts you 48-72 hours in advance 
+                                        and suggests actions to take now.
+                                    </p>
+                                    <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
+                                        <p className="font-semibold text-purple-900 mb-2">Think of it like this:</p>
+                                        <p className="text-gray-700">
+                                            A hurricane is forming in the Gulf. Our system doesn't wait until trucks are delayed. 
+                                            It tells you THREE DAYS before to pre-stock essential items, reroute incoming shipments, 
+                                            and alert customers about potential impacts. You're ahead of the storm, not chasing it.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-purple-600">Proven Results</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-600">
+                                            <p className="text-3xl font-bold text-green-600 mb-1">40%</p>
+                                            <p className="text-sm text-gray-700">Faster response times</p>
+                                        </div>
+                                        <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
+                                            <p className="text-3xl font-bold text-blue-600 mb-1">$200M+</p>
+                                            <p className="text-sm text-gray-700">Annual savings (UPS)</p>
+                                        </div>
+                                        <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
+                                            <p className="text-3xl font-bold text-orange-600 mb-1">25-30%</p>
+                                            <p className="text-sm text-gray-700">Customer satisfaction boost</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Visual Process Infographic */}
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-purple-600">Our Three-Phase Response</h3>
+                                    <div className="bg-gray-100 p-4 rounded-lg">
+                                        <img 
+                                            src="/mnt/user-data/uploads/1763505617925_image.png" 
+                                            alt="Home Depot Before, During, After Response Process" 
+                                            className="w-full rounded-lg shadow-md"
+                                        />
+                                        <p className="text-sm text-gray-600 mt-2 text-center italic">
+                                            Home Depot's established disaster response framework - now enhanced with predictive intelligence
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-purple-600">How You'll Use It</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-3">
+                                            <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">1</div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">Check Your Dashboard Daily</p>
+                                                <p className="text-sm text-gray-600">See risk levels, incoming weather, and recommended actions</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">2</div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">Get Early Alerts</p>
+                                                <p className="text-sm text-gray-600">System notifies you when risk reaches action threshold (48-72 hours out)</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">3</div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">Follow Recommended Actions</p>
+                                                <p className="text-sm text-gray-600">System suggests specific steps: pre-stock items, arrange transfers, alert customers</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">4</div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900">Monitor and Adjust</p>
+                                                <p className="text-sm text-gray-600">System updates predictions as situation develops</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-indigo-50 border-l-4 border-indigo-600 p-4 rounded">
+                                    <h3 className="font-bold mb-2 text-indigo-900">Bottom Line:</h3>
+                                    <p className="text-gray-700">
+                                        You'll know about problems before they happen. You'll have clear actions to take. 
+                                        And you'll keep your store running smoothly while competitors scramble. That's the power of predictive intelligence.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Scenario Header */}
+                    <div className="gradient-blue text-white p-8 rounded-lg mb-6 shadow-lg">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Cloud className="w-8 h-8" />
+                            <div>
+                                <p className="text-sm text-blue-100 font-semibold">SCENARIO: SUPPLY CHAIN DISRUPTION</p>
+                                <h2 className="text-2xl font-bold">Weather-Related Delivery Delays</h2>
+                            </div>
+                        </div>
+                        <p className="text-blue-100 text-lg mt-2">Using predictive analytics to stay ahead of storm impacts</p>
+                    </div>
+
+                    {/* Section A: Emergency Protocol - ENHANCED */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={AlertTriangle} 
+                            title="A) Emergency Protocol (Predictive-Enhanced)" 
+                            section="protocol"
+                            color="bg-red-600"
+                        />
+                        {expandedSections.protocol && (
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                {/* NEW: Predictive Alert Box */}
+                                <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-5 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <Brain className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                                        <div>
+                                            <h3 className="font-bold text-blue-900 mb-2">🔮 PREDICTIVE ALERT - 48-72 Hours Before Impact</h3>
+                                            <p className="text-gray-700 mb-3">
+                                                The system will notify you days BEFORE trucks are delayed. Here's what to do immediately:
+                                            </p>
+                                            <ul className="space-y-2">
+                                                <li className="flex gap-2">
+                                                    <span className="text-blue-600 font-bold">•</span>
+                                                    <span className="text-gray-700">Review predicted impact zones and affected delivery routes</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="text-blue-600 font-bold">•</span>
+                                                    <span className="text-gray-700">Pre-order critical items from backup suppliers</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="text-blue-600 font-bold">•</span>
+                                                    <span className="text-gray-700">Arrange early inter-store transfers before weather hits</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="text-blue-600 font-bold">•</span>
+                                                    <span className="text-gray-700">Pre-load trucks with essential supplies (generators, batteries, tarps)</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="text-blue-600 font-bold">•</span>
+                                                    <span className="text-gray-700">Send proactive customer alerts: "We're preparing for weather impacts"</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-2 text-red-600">When to Activate This Protocol</h3>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="font-semibold mb-2">TRIGGER #1 - Predictive (Preferred):</p>
+                                        <p className="text-gray-700 mb-3">System alerts you 48-72 hours before weather event</p>
+                                        
+                                        <p className="font-semibold mb-2">TRIGGER #2 - Reactive (Backup):</p>
+                                        <p className="text-gray-700">Expected trucks are 4+ hours late AND weather reports confirm storms</p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-red-600">Your First Actions (0-5 Minutes)</h3>
+                                    <ul className="space-y-2">
+                                        {[
+                                            "Check predictive dashboard for impact timeline and affected SKUs",
+                                            "Alert department heads about incoming disruption",
+                                            "Verify what critical items we already have in stock",
+                                            "Contact GSOC to confirm delay and coordinate regional response",
+                                            "Start preparing customer communications"
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex gap-2">
+                                                <span className="text-red-600 font-bold">{i + 1}.</span>
+                                                <span className="text-gray-700">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-red-600">Team Actions (First 30 Minutes)</h3>
+                                    <ul className="space-y-2">
+                                        {[
+                                            "Count inventory of top 20 at-risk items",
+                                            "Post clear signage: 'Some items may have limited availability due to weather'",
+                                            "Train associates on product alternatives and substitutions",
+                                            "Arrange transfers from nearby stores (not affected by storm)",
+                                            "Contact backup vendors for emergency replenishment",
+                                            "Send updates every 30 minutes to customers and team",
+                                            "Document everything in incident log with times and actions taken"
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex gap-2">
+                                                <span className="text-red-600 font-bold">•</span>
+                                                <span className="text-gray-700">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded">
+                                    <h3 className="font-bold text-lg mb-2 text-red-600">⚠️ Safety First - Non-Negotiables</h3>
+                                    <ul className="space-y-2">
+                                        {[
+                                            "Never send associates to check on trucks or drive in bad weather",
+                                            "Don't promise customers exact delivery times - give ranges and alternatives only",
+                                            "Prioritize life-safety items first (generators, batteries, emergency supplies)"
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex gap-2">
+                                                <span className="text-red-600 font-bold text-xl">⚠</span>
+                                                <span className="text-gray-700 font-medium">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section B: Decision Tree - SIMPLIFIED */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={Package} 
+                            title="B) Simple Decision Guide" 
+                            section="flowchart"
+                            color="bg-blue-600"
+                        />
+                        {expandedSections.flowchart && (
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <div className="bg-blue-50 p-6 rounded-lg">
+                                    <div className="flex flex-col space-y-4">
+                                        <div className="bg-blue-600 text-white p-4 rounded-lg text-center font-bold">
+                                            ⚡ START: Predictive Alert OR Trucks 4+ Hours Late
+                                        </div>
+
+                                        <div className="flex justify-center text-3xl text-blue-600">↓</div>
+
+                                        <div className="bg-yellow-100 border-2 border-yellow-600 p-4 rounded-lg">
+                                            <p className="font-bold text-center mb-2">QUESTION 1: Are we out of emergency supplies?</p>
+                                            <p className="text-sm text-gray-600 text-center">(Generators, batteries, tarps if storm is nearby)</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="font-bold text-red-600 text-lg">YES → URGENT</div>
+                                                <div className="bg-red-100 border-2 border-red-600 p-4 rounded">
+                                                    <p className="font-bold mb-2 text-red-900">Emergency Mode</p>
+                                                    <ul className="text-sm space-y-1">
+                                                        <li>• Call GSOC immediately</li>
+                                                        <li>• Activate emergency vendors</li>
+                                                        <li>• Rush transfers from other stores</li>
+                                                        <li>• Priority restock ASAP</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="font-bold text-green-600 text-lg">NO → Continue</div>
+                                                <div className="bg-green-100 border-2 border-green-600 p-4 rounded">
+                                                    <p className="font-bold mb-2 text-green-900">Standard Response</p>
+                                                    <ul className="text-sm space-y-1">
+                                                        <li>• Follow normal protocol</li>
+                                                        <li>• Keep customers informed</li>
+                                                        <li>• Arrange alternatives</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-center text-3xl text-blue-600">↓</div>
+
+                                        <div className="bg-yellow-100 border-2 border-yellow-600 p-4 rounded-lg">
+                                            <p className="font-bold text-center mb-2">QUESTION 2: Can we serve customers with current stock?</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="font-bold text-green-600 text-lg">YES → Stay Open</div>
+                                                <div className="bg-green-100 border-2 border-green-600 p-4 rounded">
+                                                    <p className="font-bold mb-2 text-green-900">Keep Operating</p>
+                                                    <ul className="text-sm space-y-1">
+                                                        <li>• Post "limited stock" signs</li>
+                                                        <li>• Offer substitutes</li>
+                                                        <li>• Issue rain checks</li>
+                                                        <li>• Update every 30 min</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="font-bold text-red-600 text-lg">NO → Close Section</div>
+                                                <div className="bg-red-100 border-2 border-red-600 p-4 rounded">
+                                                    <p className="font-bold mb-2 text-red-900">Temporary Closure</p>
+                                                    <ul className="text-sm space-y-1">
+                                                        <li>• Close affected aisles</li>
+                                                        <li>• Redirect customers</li>
+                                                        <li>• Coordinate urgent transfers</li>
+                                                        <li>• Alert GSOC for help</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-center text-3xl text-blue-600">↓</div>
+
+                                        <div className="bg-green-600 text-white p-4 rounded-lg text-center font-bold">
+                                            ✅ GOAL: Return to Normal Operations as Soon as Safe
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section C: Roles - SIMPLIFIED */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={Users} 
+                            title="C) Who Does What" 
+                            section="roles"
+                            color="bg-purple-600"
+                        />
+                        {expandedSections.roles && (
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <p className="text-gray-700 mb-4">Clear roles = faster response. Everyone knows their job:</p>
+                                
+                                <div className="space-y-4">
+                                    <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
+                                        <p className="font-bold text-purple-900 mb-2">You (Shift Lead)</p>
+                                        <p className="text-gray-700">Make final decisions. Start the protocol. Approve transfers. Decide when to reopen.</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded">
+                                        <p className="font-bold text-gray-900 mb-2">Inventory Captain</p>
+                                        <p className="text-gray-700">Count stock. Find what we need. Arrange transfers. Track when items arrive.</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded">
+                                        <p className="font-bold text-gray-900 mb-2">Communications Lead</p>
+                                        <p className="text-gray-700">Send updates every 30 minutes. Post signs. Answer customer questions. Update app/website.</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded">
+                                        <p className="font-bold text-gray-900 mb-2">Customer Service Lead</p>
+                                        <p className="text-gray-700">Help customers find alternatives. Issue rain checks. Handle complaints calmly.</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded">
+                                        <p className="font-bold text-gray-900 mb-2">Department Heads</p>
+                                        <p className="text-gray-700">Check your sections. Post signs. Help customers. Get ready for restock.</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded">
+                                        <p className="font-bold text-gray-900 mb-2">Runners</p>
+                                        <p className="text-gray-700">Pick up items from other stores. Deliver signs. Support wherever needed.</p>
+                                    </div>
+
+                                    <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                                        <p className="font-bold text-blue-900 mb-2">GSOC (Command Center)</p>
+                                        <p className="text-gray-700">Send predictive alerts. Coordinate with trucking companies. Approve emergency vendors. Help with regional transfers.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section D: Communications - SIMPLIFIED */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={MessageSquare} 
+                            title="D) What to Say to Customers" 
+                            section="communications"
+                            color="bg-green-600"
+                        />
+                        {expandedSections.communications && (
+                            <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+                                <p className="text-gray-700 font-semibold">
+                                    Keep messages short, honest, and helpful. Update every 30 minutes.
+                                </p>
+
+                                {/* BEFORE */}
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-green-600">BEFORE (Predictive Alert)</h3>
+                                    
+                                    <div className="bg-gray-50 p-4 rounded mb-3">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">Text Message:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "Store #1234: Weather may delay some deliveries Wed-Thu. Shop early for best selection. We'll keep you updated."
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">App/Email:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "Heads up: Weather in our supply region may cause delivery delays Wednesday-Thursday. We're preparing by stocking up on popular items and arranging backup deliveries. Check product availability online before you visit. We'll update you daily. Thanks for understanding."
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* DURING */}
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-green-600">DURING (Active Delay)</h3>
+                                    
+                                    <div className="bg-gray-50 p-4 rounded mb-3">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">Text Message:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "Store #1234: Limited stock in [Department] due to weather delays. Ask us for alternatives. Rain checks available. Update in 30 min."
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded mb-3">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">App/Email:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "We're actively managing delivery delays at Store #1234. Actions we've taken: checking hourly for truck arrivals, transferring items from nearby stores, offering product substitutions. Our team can help you find alternatives or issue rain checks. Check online for current stock levels. Next update at 3 PM."
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">Store Sign:</p>
+                                        <p className="bg-white p-3 rounded border text-center font-bold">
+                                            "LIMITED STOCK DUE TO WEATHER<br/>
+                                            Ask us for alternatives • Rain checks available"
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* AFTER */}
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-green-600">AFTER (Back to Normal)</h3>
+                                    
+                                    <div className="bg-gray-50 p-4 rounded mb-3">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">Text Message:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "Store #1234: All clear! Full inventory restored. All departments fully stocked. Thanks for your patience!"
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-4 rounded">
+                                        <p className="font-semibold text-sm text-gray-600 mb-2">App/Email:</p>
+                                        <p className="bg-white p-3 rounded border">
+                                            "Great news: Store #1234 is fully restocked. All delayed shipments have arrived and shelves are full. Rain checks issued during the delay are valid for 30 days. Thank you for your understanding. We're here to help with your projects!"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section E: Business Continuity - SIMPLIFIED */}
+                    <div className="mb-4">
+                        <SectionHeader 
+                            icon={ClipboardCheck} 
+                            title="E) Keep Operations Running" 
+                            section="continuity"
+                            color="bg-indigo-600"
+                        />
+                        {expandedSections.continuity && (
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                {/* Must-Have Items */}
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-indigo-600">Top 10 Items to Keep in Stock</h3>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            "Generators",
+                                            "Batteries (AA, AAA, D)",
+                                            "Flashlights",
+                                            "Extension cords",
+                                            "Tarps",
+                                            "Plywood",
+                                            "Bottled water",
+                                            "Trash bags",
+                                            "Duct tape",
+                                            "Seasonal emergency supplies"
+                                        ].map((item, i) => (
+                                            <div key={i} className="bg-indigo-50 p-2 rounded text-sm flex items-center gap-2">
+                                                <span className="text-indigo-600 font-bold">{i + 1}.</span>
+                                                <span>{item}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Backup Plans */}
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-indigo-600">Backup Plans</h3>
+                                    
+                                    <div className="space-y-3">
+                                        <div className="bg-gray-50 p-3 rounded">
+                                            <p className="font-semibold mb-2">If We're Low on Stock:</p>
+                                            <ul className="text-sm space-y-1 list-disc list-inside">
+                                                <li>Transfer from nearby stores</li>
+                                                <li>Call emergency vendors</li>
+                                                <li>Offer similar products</li>
+                                                <li>Give rain checks for advertised items</li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="bg-gray-50 p-3 rounded">
+                                            <p className="font-semibold mb-2">Customer Service:</p>
+                                            <ul className="text-sm space-y-1 list-disc list-inside">
+                                                <li>Train team on substitutes</li>
+                                                <li>Help customers check other locations online</li>
+                                                <li>Set up information desk for questions</li>
+                                                <li>Offer to notify when items arrive</li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="bg-gray-50 p-3 rounded">
+                                            <p className="font-semibold mb-2">Minimum Staff Needed:</p>
+                                            <ul className="text-sm space-y-1 list-disc list-inside">
+                                                <li>1 Shift Lead (you)</li>
+                                                <li>1 Inventory person</li>
+                                                <li>1 Communications person</li>
+                                                <li>1 Customer service person</li>
+                                                <li>2 Runners/helpers</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* When to Reopen */}
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-3 text-indigo-600">When to Return to Normal</h3>
+                                    <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded">
+                                        <p className="font-semibold mb-2">You can go back to normal operations when:</p>
+                                        <ul className="space-y-2">
+                                            {[
+                                                "Trucks arrive and items are on shelves",
+                                                "Top 10 critical items are at least 70% stocked",
+                                                "All signs updated to 'Fully Stocked'",
+                                                "Customers notified via text, app, and signs",
+                                                "Incident report completed and sent to GSOC"
+                                            ].map((item, i) => (
+                                                <li key={i} className="flex gap-2">
+                                                    <span className="text-green-600 font-bold">✓</span>
+                                                    <span className="text-sm">{item}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* Track These Numbers */}
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-indigo-600">Track These Numbers</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-indigo-50 p-3 rounded">
+                                            <p className="font-bold text-indigo-600 mb-1">Response Time</p>
+                                            <p className="text-xs text-gray-600">From alert to team briefed</p>
+                                            <p className="text-sm font-bold mt-1">Goal: Under 15 minutes</p>
+                                        </div>
+
+                                        <div className="bg-indigo-50 p-3 rounded">
+                                            <p className="font-bold text-indigo-600 mb-1">First Customer Update</p>
+                                            <p className="text-xs text-gray-600">From alert to first message sent</p>
+                                            <p className="text-sm font-bold mt-1">Goal: Under 20 minutes</p>
+                                        </div>
+
+                                        <div className="bg-indigo-50 p-3 rounded">
+                                            <p className="font-bold text-indigo-600 mb-1">Stock Levels</p>
+                                            <p className="text-xs text-gray-600">% of top 10 items in stock</p>
+                                            <p className="text-sm font-bold mt-1">Goal: Above 70%</p>
+                                        </div>
+
+                                        <div className="bg-indigo-50 p-3 rounded">
+                                            <p className="font-bold text-indigo-600 mb-1">Documentation</p>
+                                            <p className="text-xs text-gray-600">All actions recorded with times</p>
+                                            <p className="text-sm font-bold mt-1">Goal: 100% Complete</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* QA Checklist */}
+                    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg mb-6">
+                        <h2 className="text-xl font-bold mb-4">✅ Final Checklist</h2>
+                        <div className="space-y-2">
+                            {[
+                                "Can a new team member follow this easily? YES",
+                                "Does everyone know their role? YES",
+                                "Are messages short and clear? YES",
+                                "Do we have multiple ways to reach customers? YES",
+                                "Do we know exactly when to reopen? YES",
+                                "Does predictive system give us advance warning? YES"
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 text-sm">
+                                    <span className="text-green-400 text-lg">✓</span>
+                                    <span>{item}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Implementation ROI */}
+                    <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-lg shadow-lg mb-6">
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <TrendingUp className="w-6 h-6" />
+                            Expected Results with Predictive System
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <p className="text-3xl font-bold mb-1">40%</p>
+                                <p className="text-sm text-green-100">Faster response to disruptions</p>
+                            </div>
+                            <div>
+                                <p className="text-3xl font-bold mb-1">$15M+</p>
+                                <p className="text-sm text-green-100">Estimated Year 1 savings</p>
+                            </div>
+                            <div>
+                                <p className="text-3xl font-bold mb-1">25%</p>
+                                <p className="text-sm text-green-100">Boost in customer satisfaction</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center text-gray-600 text-sm space-y-2">
+                        <p className="font-semibold">THD GSOC Playbook | Predictive Supply Chain Management</p>
+                        <p>Questions? Contact your GSOC Command Center</p>
+                        <p className="text-xs">Version 2.0 | Enhanced with Predictive Analytics | November 2025</p>
+                        <p className="text-xs text-gray-500">Based on proven systems from UPS HEAT and industry best practices</p>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(
+            <EnhancedSupplyChainPlaybook />
+        );
+    </script>
+</body>
+</html>
